@@ -7,5 +7,4 @@ module wheel(radius, thickness, angle = 360) {
   }
 }
 
-
 wheel(30, 5, 90);
