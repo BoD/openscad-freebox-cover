@@ -1,3 +1,5 @@
+use <wheel.scad>
+
 $fa = 1;
 $fs = 0.4;
 
@@ -16,17 +18,37 @@ top_back_width = top_front_width - 10;
 top_depth = 30;
 
 module front() {
-  rounded_trapezoid(
-    front_bottom_width, 
-    front_top_width, 
-    front_height, 
-    thickness
-  );
+  difference() {
+    rounded_trapezoid(
+      front_bottom_width, 
+      front_top_width, 
+      front_height, 
+      thickness
+    );
+  
+    translate([(front_top_width + front_bottom_width) / 4 - front_height / 2 , 0, 0])
+      bevel();
+
+    translate([-(front_top_width + front_bottom_width) / 4 + front_height / 2 , 0, 0])
+      rotate([0, 0, 180])
+        bevel();
+
+  }
+}
+
+module bevel() {
+  difference() {
+    translate([0, -(thickness + 0) / 2, 0])
+    cube([front_height / 2, thickness + 0, front_height / 2]);
+
+    translate([0, 0, front_height / 2])
+    rotate([90, 90])
+    wheel(radius = front_height / 2, thickness = thickness, angle = 90);
+  }
 }
 
 module top() {
-  color("blue")
-  translate([0, 0, front_height - thickness / 2])
+  translate([0, - thickness / 2, front_height - thickness / 2])
   rotate([-90, 0, 0])
   rounded_trapezoid(
     top_front_width, 
@@ -45,9 +67,9 @@ module rounded_trapezoid(
   radius = thickness / 2;
   hull() {
     // Bottom
-    translate([-bottom_width / 2 + radius, 0])
+    translate([-bottom_width / 2 + radius, 0, radius])
       sphere(radius);
-    translate([bottom_width / 2 - radius, 0])
+    translate([bottom_width / 2 - radius, 0, radius])
       sphere(radius);
 
     // Top
