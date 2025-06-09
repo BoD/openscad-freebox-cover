@@ -92,5 +92,7 @@ module logo(height = 30, thickness = 1) {
 $fa = .1;
 $fs = .1;
 
-front();
-top();
+union() {
+  front();
+  top();
+}
