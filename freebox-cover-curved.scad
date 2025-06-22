@@ -1,22 +1,6 @@
-fbx_height = 67;
+use <cylinder_extrude.scad>
 
-thickness = 5;
-
-// A bit shorter than the fbx, so it won't touch the floor.
-front_height = fbx_height - 5;
-
-front_bottom_width = 150;
-front_top_width = 170;
-front_top_bottom_ratio = front_top_width / front_bottom_width;
-
-top_back_width = front_top_width - 10;
-top_depth = 30;
-
-curve_radius = 600;
-curve_angle = atan((front_bottom_width / 2) / sqrt(curve_radius ^ 2 - (front_bottom_width / 2) ^ 2)) * 2;
-
-
-module enclosing() {
+module debug_enclosing() {
   color("blue")
     translate([0, 0, front_height / 2])
       cube([front_bottom_width, thickness, front_height], center = true);
@@ -29,17 +13,29 @@ module enclosing() {
       cube([thickness, 50, front_height / 2], center = true);
 }
 
-module curve_center() {
+module debug_curve_center() {
   color("red")
     translate([0, curve_radius, 0])
       sphere(thickness / 2);
 }
 
-
-module front_plate_line(step, i, step_width, thickness) {
+module front_plate_line(
+  thickness,
+  front_height,
+  front_bottom_width,
+  front_top_width,
+  top_back_width,
+  top_depth,
+  curve_radius,
+  curve_angle,
+  step,
+  step_width,
+  i, 
+) {
   round_bevel_fraction = .2;
 
   corner_radius = front_bottom_width * round_bevel_fraction;
+  front_top_bottom_ratio = front_top_width / front_bottom_width;
 
   // Bottom
   angle_bottom = (curve_angle / step) * i - curve_angle / 2;
@@ -68,25 +64,105 @@ module front_plate_line(step, i, step_width, thickness) {
     sphere(thickness / 2);
 }
 
-module front_plate(step) {
+module front_plate(
+  thickness,
+  front_height,
+  front_bottom_width,
+  front_top_width,
+  top_back_width,
+  top_depth,
+  curve_radius,
+  curve_angle,
+  step,
+) {
   step_width = front_bottom_width / step;
-  colors = ["red", "green", "blue"];
-  translate([0, curve_radius, 0])
+  translate([0, curve_radius + thickness / 2, 0])
     rotate([0, 0, 180])
       for (i = [0 : step - 1]) {
-        color(colors[i % len(colors)])
-          hull() {
-            front_plate_line(step = step, i = i, step_width = step_width, thickness = thickness);
-            front_plate_line(step = step, i = i + 1, step_width = step_width, thickness = thickness);
-          };
+        hull() {
+          front_plate_line(
+            thickness = thickness,
+            front_height = front_height,
+            front_bottom_width = front_bottom_width,
+            front_top_width = front_top_width,
+            top_back_width = top_back_width,
+            top_depth = top_depth,
+            curve_radius = curve_radius,
+            curve_angle = curve_angle,
+            step = step,
+            step_width = step_width,
+            i = i,
+          );
+          front_plate_line(
+            thickness = thickness,
+            front_height = front_height,
+            front_bottom_width = front_bottom_width,
+            front_top_width = front_top_width,
+            top_back_width = top_back_width,
+            top_depth = top_depth,
+            curve_radius = curve_radius,
+            curve_angle = curve_angle,
+            step = step,
+            step_width = step_width,
+            i = i + 1,
+          );
+        };
       }
 }
 
-module top(step) {
+module logo(height, thickness, curve_radius) {
+  translate([0, curve_radius + thickness, height / 2])
+    rotate([0, 0, -90])
+      cylinder_extrude(curve_radius, thickness * 2, height)
+        resize([0, height, 0], true)
+          import("lurez-full.svg", center = true);
+}
+
+module front(
+  thickness,
+  front_height,
+  front_bottom_width,
+  front_top_width,
+  logo_height,
+  logo_thickness,
+  top_back_width,
+  top_depth,
+  curve_radius,
+  curve_angle,
+  step,
+) {
+  difference() {
+    front_plate(
+      thickness = thickness,
+      front_height = front_height,
+      front_bottom_width = front_bottom_width,
+      front_top_width = front_top_width,
+      top_back_width = top_back_width,
+      top_depth = top_depth,
+      curve_radius = curve_radius,
+      curve_angle = curve_angle,
+      step = step,
+    );
+    translate([0, 0, (front_height - logo_height) / 2])
+      logo(height = logo_height, thickness = 1, curve_radius = curve_radius);
+  };
+}
+
+module top(
+  thickness,
+  front_height,
+  front_bottom_width,
+  front_top_width,
+  top_back_width,
+  top_depth,
+  curve_radius,
+  curve_angle,
+  step,
+) {
+  front_top_bottom_ratio = front_top_width / front_bottom_width;
   step_width = front_bottom_width / step;
-  colors = ["red", "green", "blue"];
   hull() {
-    translate([0, curve_radius, 0])
+    translate([0, curve_radius + thickness / 2, 0])
       rotate([0, 0, 180])
         for (i = [0 : step]) {
           angle_top = (curve_angle * front_top_bottom_ratio / step) * i - curve_angle * front_top_bottom_ratio / 2;
@@ -95,8 +171,7 @@ module top(step) {
             curve_radius * cos(angle_top),
             front_height - thickness / 2,
           ])
-            color(colors[i % len(colors)])
-              sphere(thickness / 2);
+            sphere(thickness / 2);
         }
 
     translate([
@@ -115,12 +190,55 @@ module top(step) {
   };
 }
 
+module freebox_cover() {
+  fbx_height = 67;
 
+  thickness = 5;
 
-//$fa = .1;
-//$fs = .1;
+  // A bit shorter than the fbx, so it won't touch the floor.
+  front_height = fbx_height - 5;
+  front_bottom_width = 150;
+  front_top_width = 170;
 
-//enclosing();
-step = 100;
-front_plate(step = step);
-top(step = step);
+  top_back_width = front_top_width - 10;
+  top_depth = 30;
+
+  logo_height = 30;
+  logo_thickness = 1;
+  
+  curve_radius = 1000;
+  curve_angle = atan((front_bottom_width / 2) / sqrt(curve_radius ^ 2 - (front_bottom_width / 2) ^ 2)) * 2;
+
+  step = 100;
+
+  front(
+    thickness = thickness,
+    front_height = front_height,
+    front_bottom_width = front_bottom_width,
+    front_top_width = front_top_width,
+    top_back_width = top_back_width,
+    top_depth = top_depth,
+    logo_height = logo_height,
+    logo_thickness = logo_thickness,
+    curve_radius = curve_radius,
+    curve_angle = curve_angle,
+    step = step,
+  );
+
+  top(
+    thickness = thickness,
+    front_height = front_height,
+    front_bottom_width = front_bottom_width,
+    front_top_width = front_top_width,
+    top_back_width = top_back_width,
+    top_depth = top_depth,
+    curve_radius = curve_radius,
+    curve_angle = curve_angle,
+    step = step,
+  );
+}
+
+$fa = .1;
+$fs = .1;
+
+freebox_cover();
