@@ -201,12 +201,12 @@ module freebox_cover() {
   front_top_width = 170;
 
   top_back_width = front_top_width - 10;
-  top_depth = 30;
+  top_depth = 40;
 
   logo_height = 30;
   logo_thickness = 1;
   
-  curve_radius = 1000;
+  curve_radius = 600;
   curve_angle = atan((front_bottom_width / 2) / sqrt(curve_radius ^ 2 - (front_bottom_width / 2) ^ 2)) * 2;
 
   step = 100;
@@ -240,5 +240,4 @@ module freebox_cover() {
 
 $fa = .1;
 $fs = .1;
-
 freebox_cover();
